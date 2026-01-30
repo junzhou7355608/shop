@@ -1,0 +1,12 @@
+# Cursor AI 项目规则
+
+## Commit 信息规范
+- 使用 Conventional Commits 格式：`<type>: <subject>`
+- **type** 类型（必选）：`feat`, `fix`, `docs`
+- **subject** 描述（必选）：简洁描述变更内容，最大长度 100 字符
+- **header** 总长度不超过 100 字符
+- 示例：
+  - `feat: 添加用户登录功能`
+  - `fix: 修复按钮点击事件处理`
+  - `docs: 更新 README 文档`
+
