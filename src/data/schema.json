@@ -13,6 +13,11 @@
         "type": "object",
         "required": ["name", "columns", "rows"],
         "properties": {
+          "formulas": {
+            "type": "object",
+            "description": "计算列公式。键为列名（须在 columns 中），值为公式表达式。同表列名直接写列名；跨表引用写「表名!列名」（如 采购明细!品名），会生成为该表该列的数据区域。支持 + - * /、括号及 Excel 函数（如 SUMIF）。该列在 rows 中可不填或仅作预览",
+            "additionalProperties": { "type": "string" }
+          },
           "name": {
             "type": "string",
             "description": "该工作表的 Tab 名称（在 .xlsx 底部显示的标签名）"

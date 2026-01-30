@@ -7,13 +7,19 @@
 ```
 shop/
 ├── README.md
+├── package.json
+├── tsconfig.json
 ├── .prettierrc
 ├── .vscode/
 │   └── settings.json
 └── src/
-    └── data/
-        ├── schema.json           # 数据格式的 JSON Schema 定义
-        └── 店铺数据统计.json      # 示例/实际数据文件
+    ├── data/
+    │   ├── schema.json           # 数据格式的 JSON Schema 定义
+    │   └── 店铺数据统计.json      # 示例/实际数据文件
+    ├── scripts/
+    │   └── json-to-xlsx.ts       # JSON → Excel 导出脚本
+    └── render/
+        └── 店铺数据统计.xlsx      # 脚本生成的 Excel 输出（可忽略版本控制）
 ```
 
 ## 数据格式说明
@@ -31,6 +37,14 @@ shop/
 
 数据文件通过 `"$schema": "./schema.json"` 引用 `schema.json`，可用支持 JSON Schema 的编辑器或工具做格式校验与自动补全。
 
+### 公式列（formulas）
+
+每个工作表的可选字段 `formulas` 用于定义「由公式计算」的列：
+
+- **键**：列名（须在 `columns` 中）
+- **值**：公式表达式。同表列名直接写列名；跨表引用写 `表名!列名`（如 `采购明细!金额`），导出为 Excel 时会替换为该表该列的数据区域
+- 支持 `+ - * /`、括号及 Excel 函数（如 `SUMIF`）。该列在 `rows` 中可不填或仅作预览，导出时会按公式生成 Excel 公式。
+
 ### 工作表类型说明
 
 | 工作表   | 说明                                                                                               |
@@ -43,7 +57,8 @@ shop/
 
 1. **编辑数据**：直接编辑 `src/data/店铺数据统计.json`（或复制为新的 JSON 文件），保持符合 `schema.json` 的结构。
 2. **校验**：在 VS Code 等编辑器中打开 JSON 文件时，若已正确设置 `$schema`，会得到结构提示和错误高亮。
-3. **扩展**：可在 `sheets` 中增加新工作表（新 Tab），或在现有工作表中增加列、行，只要符合 `schema.json` 中的定义即可。
+3. **导出 Excel**：在项目根目录执行 `pnpm gen:xlsx`，会根据 JSON 生成 `src/render/店铺数据统计.xlsx`，便于分享或二次编辑。
+4. **扩展**：可在 `sheets` 中增加新工作表（新 Tab），或在现有工作表中增加列、行，只要符合 `schema.json` 中的定义即可。
 
 ## 示例片段
 
@@ -77,4 +92,17 @@ shop/
 }
 ```
 
+## 导出 Excel（gen:xlsx）
+
+- **命令**：`pnpm gen:xlsx`（内部执行 `tsx src/scripts/json-to-xlsx.ts`）
+- **输入**：`src/data/店铺数据统计.json`
+- **输出**：`src/render/店铺数据统计.xlsx`
+- **行为**：按 `sheets` 顺序生成多个工作表；若某表定义了 `formulas`，对应列会写入 Excel 公式（同表列名、`表名!列名` 会替换为单元格/区域引用）。
+
 ## 开发说明
+
+- **环境**：Node.js（建议 18+）、pnpm
+- **安装依赖**：`pnpm install`
+- **脚本**：
+  - `pnpm gen:xlsx` — 从 JSON 生成 Excel，见上文
+- **代码规范**：项目使用 Prettier（见 `.prettierrc`），提交前可格式化 JSON/TS 等。
