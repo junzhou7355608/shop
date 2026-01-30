@@ -1,0 +1,12 @@
+{
+  "prettier.enable": true,
+  "eslint.enable": true,
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.codeActionsOnSave": [
+    "source.addMissingImports",
+    "source.fixAll",
+    "source.organizeImports",
+    "editor.formatOnSave"
+  ]
+}
