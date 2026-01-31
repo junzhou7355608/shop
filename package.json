@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "gen:template": "tsx src/scripts/json-to-xlsx.ts",
-    "gen:data": "tsx src/scripts/xlsx-to-json.ts"
+    "gen:data": "tsx src/scripts/xlsx-to-json.ts",
+    "gen": "pnpm gen:template && cp src/render-template/店铺数据统计-模板.xlsx src/render-data/店铺数据统计.xlsx && pnpm gen:data"
   },
   "dependencies": {
     "xlsx": "^0.18.5"
