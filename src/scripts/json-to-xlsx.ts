@@ -27,6 +27,9 @@ function colToLetter(i: number): string {
 /** 各表信息：表名 -> 列名数组、行数，用于生成跨表区域 */
 type SheetInfo = { columns: string[]; rowCount: number };
 
+/** 跨表引用在 Excel 中的最大数据行号（表头在第 1 行，数据从第 2 行起）。用固定大行号保证在 Excel 里加行后公式仍覆盖新行。 */
+const CROSS_SHEET_DATA_ROW_END = 10000;
+
 /** 日期/月份列名，统一以字符串写入 Excel，与 JSON 一致 */
 const DATE_COLUMNS = ['日期', '月份'];
 
@@ -69,7 +72,7 @@ function formulaWithRefs(
       const colIdx = info.columns.indexOf(colName);
       const letter = colToLetter(colIdx);
       const r2 = 2;
-      const rEnd = 2 + info.rowCount - 1;
+      const rEnd = CROSS_SHEET_DATA_ROW_END; // 固定到最大行，Excel 里加行后公式仍覆盖
       const range = `${sheetName}!$${letter}$${r2}:$${letter}$${rEnd}`;
       out = out.split(token).join(range);
     }
