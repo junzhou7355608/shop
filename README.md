@@ -113,7 +113,7 @@ shop/
 - **命令**：`pnpm gen:template`（执行 `tsx src/scripts/json-to-xlsx.ts`）
 - **输入**：`src/data/*.json`（排除 `schema.json` 和 `* copy.json`）
 - **输出**：`src/render-template/*-模板.xlsx`
-- **行为**：按 `sheets` 顺序生成多个工作表；`formulas` 中同表列名、`表名!列名` 会替换为 Excel 单元格/区域引用。
+- **行为**：按 `sheets` 顺序生成多个工作表；`formulas` 中同表列名、`表名!列名` 会替换为 Excel 单元格/区域引用；`日期`、`月份` 列会设置 Excel 数字格式（yyyy-mm-dd、yyyy-mm），避免 Excel 自动转换显示。
 
 ### gen:data — Excel → JSON 同步
 

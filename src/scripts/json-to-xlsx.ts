@@ -27,6 +27,35 @@ function colToLetter(i: number): string {
 /** 各表信息：表名 -> 列名数组、行数，用于生成跨表区域 */
 type SheetInfo = { columns: string[]; rowCount: number };
 
+/** 列名 -> Excel 数字格式（日期/月份），避免 Excel 自动转换显示格式 */
+const COLUMN_FORMATS: Record<string, string> = {
+  日期: 'yyyy-mm-dd',
+  月份: 'yyyy-mm',
+};
+
+/** 将日期字符串转为 Date，并带上 Excel 格式 */
+function makeDateCell(val: unknown, colName: string): { t: 'd'; v: Date; z: string } | null {
+  const fmt = COLUMN_FORMATS[colName];
+  if (!fmt || val === '' || val === undefined) return null;
+  const s = String(val).trim();
+  if (!s) return null;
+  // yyyy-mm-dd
+  const dMatch = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+  if (dMatch) {
+    const [, y, m, d] = dMatch;
+    const date = new Date(+y, +m - 1, +d);
+    if (!Number.isNaN(date.getTime())) return { t: 'd', v: date, z: fmt };
+  }
+  // yyyy-mm
+  const mMatch = s.match(/^(\d{4})-(\d{1,2})$/);
+  if (mMatch) {
+    const [, y, m] = mMatch;
+    const date = new Date(+y, +m - 1, 1);
+    if (!Number.isNaN(date.getTime())) return { t: 'd', v: date, z: fmt };
+  }
+  return null;
+}
+
 /** 将公式里的列名替换为单元格引用；表名!列名 替换为对应表的数据区域 */
 function formulaWithRefs(
   formulaStr: string,
@@ -114,7 +143,10 @@ function buildXlsx(baseName: string): void {
           const v = typeof cached === 'number' ? cached : 0; // 缓存值供 Excel 显示
           return { t: 'n' as const, v, f: excelFormula, z: isPercent ? '0.00%' : '0.00' };
         }
-        return row[col] ?? '';
+        const raw = row[col] ?? '';
+        const dateCell = makeDateCell(raw, col);
+        if (dateCell) return dateCell;
+        return raw;
       }),
     );
 

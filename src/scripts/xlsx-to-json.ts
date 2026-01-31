@@ -1,4 +1,4 @@
-import { mkdirSync, writeFileSync } from 'fs';
+import { copyFileSync, existsSync, mkdirSync, writeFileSync } from 'fs';
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
 import prettier from 'prettier';
@@ -16,11 +16,23 @@ interface DataFile {
 }
 
 /** 从单元格取值：优先显示值，其次原始值，公式格取计算后的值 */
-function getCellValue(cell: XLSX.CellObject | undefined): string | number {
+function getCellValue(
+  cell: XLSX.CellObject | undefined,
+  colName?: string,
+): string | number {
   if (!cell) return '';
   if (cell.t === 'n' && typeof cell.v === 'number') return cell.v;
   if (cell.t === 's' && typeof cell.v === 'string') return cell.v;
-  if (cell.t === 'd' && cell.v instanceof Date) return cell.v.toISOString().slice(0, 10);
+  if (cell.t === 'd' && cell.v instanceof Date) {
+    const d = cell.v;
+    if (colName === '月份') {
+      if (typeof cell.w === 'string' && /^\d{4}-\d{1,2}$/.test(cell.w)) return cell.w;
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    }
+    if (colName === '日期' && typeof cell.w === 'string' && /^\d{4}-\d{1,2}-\d{1,2}$/.test(cell.w))
+      return cell.w;
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
   if (cell.t === 'b') return cell.v ? 'TRUE' : 'FALSE';
   if (typeof cell.v === 'string' || typeof cell.v === 'number') return cell.v;
   if (cell.w) return cell.w; // 格式化后的字符串
@@ -100,6 +112,7 @@ const baseName = xlsxName.replace(/\.xlsx?$/i, '');
 
 const renderDataDir = join(__dirname, '../render-data');
 const dataDir = join(__dirname, '../data');
+const backupDir = join(__dirname, '../backup');
 const xlsxPath = join(renderDataDir, xlsxName);
 const jsonPath = join(dataDir, `${baseName}.json`);
 
@@ -133,7 +146,7 @@ for (const sheetName of workbook.SheetNames) {
         const excelRow = r + 1; // 表内 0-based 行 r → Excel 行号（首行为 1，数据首行通常为 2）
         formulas[colName] = formulaToColumnNames(cell.f, columns, excelRow);
       }
-      const value = getCellValue(cell);
+      const value = getCellValue(cell, colName);
       row[colName] = formatCellValue(cell, value, colName);
     }
     rows.push(row);
@@ -153,6 +166,10 @@ const data: DataFile & { $schema?: string } = {
 };
 
 mkdirSync(dataDir, { recursive: true });
+if (existsSync(jsonPath)) {
+  mkdirSync(backupDir, { recursive: true });
+  copyFileSync(jsonPath, join(backupDir, `${baseName}.json`));
+}
 const jsonContent = JSON.stringify(data, null, 2);
 const formatted = await prettier.format(jsonContent, {
   parser: 'json',
