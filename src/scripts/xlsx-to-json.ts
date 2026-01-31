@@ -47,7 +47,7 @@ function getCellValue(
       return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
     if (colName === '日期')
       return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-    return cell.v;
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   }
   if (cell.t === 'b') return cell.v ? 'TRUE' : 'FALSE';
   if (typeof cell.v === 'string' || typeof cell.v === 'number') return cell.v;
