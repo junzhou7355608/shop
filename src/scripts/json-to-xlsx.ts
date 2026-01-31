@@ -33,25 +33,33 @@ const COLUMN_FORMATS: Record<string, string> = {
   月份: 'yyyy-mm',
 };
 
-/** 将日期字符串转为 Date，并带上 Excel 格式 */
-function makeDateCell(val: unknown, colName: string): { t: 'd'; v: Date; z: string } | null {
+/** Excel 日期序列：1899-12-30 为 0，纯日期无时间 */
+function toExcelSerial(y: number, m: number, d: number): number {
+  const epoch = Date.UTC(1899, 11, 30);
+  const date = Date.UTC(y, m - 1, d);
+  return Math.round((date - epoch) / (24 * 60 * 60 * 1000));
+}
+
+/** 将日期字符串转为 Excel 序列号（纯日期无时间，编辑栏不显示 08:00） */
+function makeDateCell(
+  val: unknown,
+  colName: string,
+): { t: 'n'; v: number; z: string } | null {
   const fmt = COLUMN_FORMATS[colName];
   if (!fmt || val === '' || val === undefined) return null;
   const s = String(val).trim();
   if (!s) return null;
-  // yyyy-mm-dd
   const dMatch = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
   if (dMatch) {
     const [, y, m, d] = dMatch;
-    const date = new Date(+y, +m - 1, +d);
-    if (!Number.isNaN(date.getTime())) return { t: 'd', v: date, z: fmt };
+    const serial = toExcelSerial(+y, +m, +d);
+    if (Number.isFinite(serial)) return { t: 'n', v: serial, z: fmt };
   }
-  // yyyy-mm
   const mMatch = s.match(/^(\d{4})-(\d{1,2})$/);
   if (mMatch) {
     const [, y, m] = mMatch;
-    const date = new Date(+y, +m - 1, 1);
-    if (!Number.isNaN(date.getTime())) return { t: 'd', v: date, z: fmt };
+    // 月份存为文本，便于 MATCH(TEXT(日期,"YYYY-MM"), 月度利润!月份) 等公式匹配
+    return { t: 's' as const, v: `${y}-${m.padStart(2, '0')}` };
   }
   return null;
 }

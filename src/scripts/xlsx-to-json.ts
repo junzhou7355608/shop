@@ -15,13 +15,27 @@ interface DataFile {
   sheets: SheetData[];
 }
 
+/** Excel 序列号转 yyyy-mm-dd 或 yyyy-mm（用 UTC 避免时区） */
+function excelSerialToDate(serial: number, colName?: string): string {
+  const epoch = Date.UTC(1899, 11, 30);
+  const d = new Date(epoch + serial * 24 * 60 * 60 * 1000);
+  const y = d.getUTCFullYear(),
+    m = String(d.getUTCMonth() + 1).padStart(2, '0');
+  if (colName === '月份') return `${y}-${m}`;
+  return `${y}-${m}-${String(d.getUTCDate()).padStart(2, '0')}`;
+}
+
 /** 从单元格取值：优先显示值，其次原始值，公式格取计算后的值 */
 function getCellValue(
   cell: XLSX.CellObject | undefined,
   colName?: string,
 ): string | number {
   if (!cell) return '';
-  if (cell.t === 'n' && typeof cell.v === 'number') return cell.v;
+  if (cell.t === 'n' && typeof cell.v === 'number') {
+    if ((colName === '日期' || colName === '月份') && cell.v >= 1 && cell.v < 100000)
+      return excelSerialToDate(cell.v, colName);
+    return cell.v;
+  }
   if (cell.t === 's' && typeof cell.v === 'string') return cell.v;
   if (cell.t === 'd' && cell.v instanceof Date) {
     const d = cell.v;
